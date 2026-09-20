@@ -35,6 +35,17 @@ Claude trimite comenzi către un server MCP local, care comunică cu API-ul Goog
 
 > La prima utilizare după restart, necesită autentificare OAuth (se deschide browser pentru confirmare).
 
+### ⚠️ Există DOUĂ fișiere de configurare, nu unul
+
+MCP-ul e configurat separat pentru Claude Desktop și pentru sesiunile Claude Code CLI. La orice schimbare a căii către fișierul de credențiale, ambele trebuie actualizate:
+
+| Config | Locație |
+|--------|---------|
+| Claude Desktop (Windows) | `C:\Users\catal\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json` |
+| Claude Code CLI (WSL) | `/home/catal/.claude.json` → secțiunea `mcpServers.google-calendar` |
+
+Ambele au cheia `env.GOOGLE_OAUTH_CREDENTIALS` cu calea către fișierul JSON.
+
 ---
 
 ## Ce poate face Claude prin acest MCP?
@@ -88,6 +99,20 @@ Claude va:
 - Eveniment creat: **Test eveniment MCP**, 22:00–23:00
 - Reminder: popup la 21:45 (15 min înainte)
 - Rezultat: ✅ Eveniment apărut imediat în Google Calendar
+
+---
+
+## Sesiunea de reparare — 20 septembrie 2026
+
+- **Problemă:** MCP-ul dădea eroare de autentificare. Investigare a arătat că nu era un token expirat, ci clientul OAuth din Google Cloud Console fusese **șters** (`Eroare 401: deleted_client`)
+- **Cauză reală:** clientul OAuth individual dispăruse din proiectul Google Cloud "Claude Calendar" (proiectul însuși era sănătos, nemarcat pentru ștergere)
+- **Fix:**
+  1. Creat client OAuth nou (tip Desktop app) în același proiect
+  2. Descărcat fișier JSON nou în `D:\ClaudeCode\Claude Code Calendar\`
+  3. Actualizate **ambele** fișiere de configurare (Claude Desktop + Claude Code CLI — vezi secțiunea de mai sus) cu noua cale
+  4. Autentificare finalizată direct din terminal: `GOOGLE_OAUTH_CREDENTIALS="<cale>" npx -y @cocal/google-calendar-mcp auth`
+- **Rezultat:** ✅ funcțional, testat cu `list-calendars` (5 calendare) și creare evenimente reale (remindere Declarația Unică + ședință supervizare 25 sep)
+- **Lecție:** dacă eroarea viitoare menționează explicit "deleted_client", nu insista cu restart — trebuie client OAuth nou din Google Cloud Console
 
 ---
 
